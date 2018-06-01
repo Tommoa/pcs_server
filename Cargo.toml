@@ -1,0 +1,18 @@
+[package]
+name = "pcs_server"
+version = "0.1.0"
+authors = ["Tom Almeida <tommoa256@gmail.com>"]
+
+[dependencies]
+pcs_protocol = { path = "../pcs_protocol" }
+
+clap = "*"
+log = "*"
+futures = "0.1.18"
+pretty_env_logger = "*"
+rustls = "*"
+tokio-core = "0.1"
+tokio-io = "0.1"
+tokio-rustls = "0.6"
+webpki = "0.18.0-alpha3"
+webpki-roots = "*"
