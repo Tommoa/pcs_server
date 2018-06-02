@@ -2,6 +2,7 @@
 name = "pcs_server"
 version = "0.1.0"
 authors = ["Tom Almeida <tommoa256@gmail.com>"]
+license = "MIT"
 
 [dependencies]
 pcs_protocol = { path = "../pcs_protocol" }
