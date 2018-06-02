@@ -11,11 +11,21 @@ use std::fs;
 use std::io::BufReader;
 
 fn load_certs(path: &str) -> Vec<Certificate> {
-    certs(&mut BufReader::new(fs::File::open(path).unwrap())).unwrap()
+    certs(
+        &mut BufReader::new(
+            fs::File::open(path)
+                .map_err(|e| error!("Error getting certificate file {}: {}", path, e)).unwrap())).unwrap()
 }
 
 fn load_keys(path: &str) -> Vec<PrivateKey> {
-    pkcs8_private_keys(&mut BufReader::new(fs::File::open(path).unwrap())).or_else(|()| rsa_private_keys(&mut BufReader::new(fs::File::open(path).unwrap()))).unwrap()
+    pkcs8_private_keys(
+        &mut BufReader::new(
+            fs::File::open(path)
+                .map_err(|e| error!("Error getting private key file {}: {}", path, e)).unwrap()))
+    .or_else(|()|
+        rsa_private_keys(
+            &mut BufReader::new(
+                fs::File::open(path).unwrap()))).unwrap()
 }
 
 pub fn setup(cert: &str, key: &str) -> Arc<rustls::ServerConfig> {

@@ -9,6 +9,7 @@ pcs_protocol = { path = "../pcs_protocol" }
 clap = "*"
 log = "*"
 futures = "0.1.18"
+hyper = "0.12"
 pretty_env_logger = "*"
 rustls = "*"
 tokio-core = "0.1"
