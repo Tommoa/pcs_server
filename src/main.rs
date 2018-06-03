@@ -1,5 +1,5 @@
 extern crate pcs_protocol;
-use pcs_protocol::{ MsgType, SerDe };
+use pcs_protocol::Message;
 
 extern crate clap;
 use clap::{ App, Arg };
@@ -30,7 +30,7 @@ use std::net::ToSocketAddrs;
 
 mod ssl;
 
-fn main() {
+fn main() -> Result<(), Box<std::error::Error>> {
     pretty_env_logger::init();
 
     let m = App::new("PCS server")
@@ -94,6 +94,7 @@ fn main() {
     let arc_config = ssl::setup(cert, pkey);
 
     let config = arc_config.clone();
+
     let http_server = Server::builder(
         // This is more complicated than it needs to be, but \o/
         http_listener.incoming()
@@ -102,28 +103,33 @@ fn main() {
                 config.accept_async(sock).into_stream()
             }
             ).flatten())
-        .serve(|| service::service_fn_ok(|req| {
+        .serve(|| service::service_fn_ok(|_req| {
             info!("Connected");
             Response::new(Body::from("Hello world!"))
-        }));
+        })).map_err(|e| Box::new(e) as Box<std::error::Error>);
+
     let config = arc_config.clone();
     let handle = core.handle();
     let judge_server = judge_listener.incoming().for_each(move |(sock, addr)| {
         info!("Connection to judge server from {}", addr);
         let handle_conn = config.accept_async(sock)
-            .and_then(|stream| {
-                let mut v = Vec::new();
-                MsgType::Accept.serialize(&mut v);
-                io::write_all(stream, v)
+            .and_then(|mut stream| {
+                let mut stream = pcs_protocol::CodedOutputStream::new(&mut stream);
+                futures::future::result(
+                    pcs_protocol::Verify::new()
+                    .write_to_with_cached_sizes(&mut stream)
+                    .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+                )
             })
-            .and_then(|(stream, _)| io::flush(stream))
             .map(move |_| info!("Accept: {}", addr))
             .map_err(move |err| error!("Couldn't get client SSL {}! {}", addr, err));
         handle.spawn(handle_conn);
         Ok(())
-    });
+    }).map_err(|e| Box::new(e) as Box<std::error::Error>);
 
     info!("Starting judge server at {}!", judge_addr);
     info!("Starting http server at {}!", http_addr);
-    core.run(http_server.map_err(|e| Box::new(e) as Box<std::error::Error>).select(judge_server.map_err(|e| Box::new(e) as Box<std::error::Error>)));
+    core.run(http_server.select(judge_server))
+        .map(|_| info!("Exiting"))
+        .map_err(|(e, _)| e)
 }
