@@ -3,3 +3,5 @@
 Cargo.lock
 cert.pem
 key.pem
+.ignore
+.pijul
