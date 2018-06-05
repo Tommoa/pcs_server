@@ -9,12 +9,12 @@ pcs_protocol = { path = "../pcs_protocol" }
 
 clap = "*"
 log = "*"
+libc = "*"
 futures = "0.1.18"
 hyper = "0.12"
 pretty_env_logger = "*"
 rustls = "*"
 tokio-core = "0.1"
-tokio-io = "0.1"
 tokio-rustls = "0.6"
 webpki = "0.18.0-alpha3"
 webpki-roots = "*"
